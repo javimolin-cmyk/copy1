@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Web → GitHub Cloner 2</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#0b0d10;color:#f4f5f7;font:15px system-ui,-apple-system,sans-serif}.wrap{max-width:1000px;margin:auto;padding:40px 20px}
+h1{font-size:42px;margin:0 0 8px}.muted{color:#9da5b1}.card{background:#14181e;border:1px solid #2a3039;border-radius:18px;padding:22px;margin:18px 0}
+label{display:block;color:#aeb6c2;font-size:13px;margin:12px 0 6px}input{width:100%;background:#0e1115;color:#fff;border:1px solid #343b46;border-radius:9px;padding:12px}button{border:0;border-radius:9px;padding:12px 18px;font-weight:700;cursor:pointer;background:#fff;color:#090b0e}.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.checks{display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin:15px 0}.checks label{display:flex;gap:7px;margin:0}.checks input{width:auto}.status{font-family:ui-monospace,monospace;background:#080a0d;border-radius:10px;padding:14px;min-height:120px;white-space:pre-wrap;overflow:auto}.warn{background:#2b2110;border:1px solid #76551c;padding:13px;border-radius:10px;color:#e8d29a;font-size:13px;line-height:1.5}.ok{color:#8de39b}.err{color:#ff8585}@media(max-width:700px){.grid{grid-template-columns:1fr}h1{font-size:32px}}
+</style></head><body><main class="wrap">
+<h1>Web → GitHub Cloner 2</h1>
+<p class="muted">Captura una web como navegador real mediante Chromium, incluyendo contenido cargado por JavaScript y recursos solicitados durante la navegación.</p>
+<div class="card"><h2>1 · Capturar</h2>
+<label>URL inicial</label><input id="url" placeholder="https://ejemplo.com/">
+<div class="grid"><div><label>Máximo de páginas</label><input id="pages" type="number" value="50" min="1" max="500"></div><div><label>Profundidad de enlaces</label><input id="depth" type="number" value="3" min="0" max="10"></div></div>
+<div class="checks"><label><input id="subs" type="checkbox"> incluir subdominios</label></div>
+<div class="warn">Esta herramienta captura contenido públicamente accesible. No intenta eludir inicio de sesión, suscripciones, paywalls, DRM, controles de acceso ni contenido privado. Si una parte de una web sólo aparece después de autenticar una cuenta o pagar una suscripción, esa barrera no se elimina.</div>
+<br><button id="clone">Iniciar captura</button></div>
+
+<div class="card"><h2>2 · GitHub</h2>
+<p class="muted">El token se usa localmente para publicar el resultado y no se escribe en el repositorio.</p>
+<div class="grid"><div><label>Token</label><input id="token" type="password"></div><div><label>Usuario / organización</label><input id="owner"></div><div><label>Repositorio</label><input id="repo" placeholder="mi-web-clonada"></div><div><label>Descripción</label><input id="desc" placeholder="Copia estática de una web"></div></div>
+<div class="checks"><label><input id="private" type="checkbox"> privado</label></div>
+<button id="publish">Publicar en GitHub</button></div>
+
+<div class="card"><h2>Estado</h2><div id="status" class="status">Esperando…</div></div>
+</main>
+<script>
+const $=x=>document.getElementById(x), status=x=>$("status").textContent=typeof x==="string"?x:JSON.stringify(x,null,2);
+$("clone").onclick=async()=>{
+ const url=$("url").value.trim();if(!url)return status("Falta la URL.");
+ status("Iniciando Chromium y rastreo…");
+ try{const r=await fetch("/api/clone",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({url,maxPages:$("pages").value,maxDepth:$("depth").value,includeSubdomains:$("subs").checked})});const d=await r.json();if(!r.ok)throw Error(d.error);status("CAPTURA COMPLETADA\n\n"+JSON.stringify(d,null,2))}catch(e){status("ERROR\n"+e.message)}
+};
+$("publish").onclick=async()=>{
+ status("Publicando…");
+ try{const r=await fetch("/api/publish",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({token:$("token").value,owner:$("owner").value,repo:$("repo").value,description:$("desc").value,isPrivate:$("private").checked})});const d=await r.json();if(!r.ok)throw Error(d.error);status("PUBLICADO\n\n"+JSON.stringify(d,null,2))}catch(e){status("ERROR\n"+e.message)}
+};
+</script></body></html>
